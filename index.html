@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crypto AI – Your Cryptocurrency Encyclopedia</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#111827;--mut:#6b7280;--ac:#f59e0b;--ac2:#7c3aed;--bd:#e5e7eb;--up:#16a34a;--dn:#dc2626;--soft:#f1f2f7}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0e17;--card:#131827;--tx:#e8eaf2;--mut:#8b93a7;--bd:#232a3d;--soft:#1b2236}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.7}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+header{text-align:center;padding:22px 0 10px}
+h1{margin:0;font-size:2rem;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:6px 0 0;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-top:14px}
+.row{display:flex;gap:8px}
+input{flex:1;min-width:0;padding:12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
+.go{padding:12px 20px;border:0;border-radius:12px;background:linear-gradient(90deg,var(--ac),var(--ac2));color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.go:disabled,.sec:disabled{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border:1px solid var(--bd);background:transparent;color:var(--tx);padding:5px 14px;border-radius:99px;font:inherit;font-size:.85rem;cursor:pointer}
+.chip:hover{border-color:var(--ac2)}
+.hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hd img{width:48px;height:48px;border-radius:50%}
+.hd h2{margin:0;font-size:1.4rem}
+.tag{background:var(--soft);padding:2px 10px;border-radius:99px;font-size:.8rem;color:var(--mut)}
+.price{font-size:2rem;font-weight:700;display:inline-block}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.st{background:var(--soft);border-radius:12px;padding:10px 12px}
+.st small{display:block;color:var(--mut);font-size:.78rem}
+h3{margin:18px 0 6px;font-size:1.05rem}
+.txt{white-space:pre-wrap}
+svg{width:100%;height:110px;display:block;margin-top:10px}
+.sub{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sec{border:1px solid var(--bd);background:transparent;color:var(--tx);padding:8px 14px;border-radius:12px;font:inherit;cursor:pointer}
+.warn{margin:16px 0;padding:10px 12px;border-radius:12px;border:1px solid var(--ac);font-size:.85rem;color:var(--mut)}
+.mut{color:var(--mut);font-size:.85rem}
+a{color:var(--ac2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>🪙 Crypto AI</h1><p>Type any cryptocurrency name to see its live data and get an AI-powered explanation</p></header>
+
+<div class="card">
+<div class="row"><input id="q" placeholder="e.g. bitcoin, solana, chainlink" autocomplete="off"><button class="go" id="go">Search</button></div>
+<div class="chips" id="chips"></div>
+</div>
+
+<div id="res"></div>
+
+<div class="card">
+<b>⚙️ AI Settings (optional)</b>
+<p class="mut" style="margin:4px 0 8px">To enable AI explanations, enter your own Anthropic API key. It is stored only in your browser and is sent only to api.anthropic.com.</p>
+<div class="row"><input id="key" type="password" placeholder="sk-ant-..."><button class="sec" id="savek">Save</button></div>
+</div>
+
+<div class="warn">⚠️ For education and information only, not financial advice. Cryptocurrencies are highly volatile and you can lose your entire investment. Prices come from CoinGecko and may be slightly delayed.</div>
+</div>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+var API="https://api.coingecko.com/api/v3/";
+var KB={
+bitcoin:{n:"Bitcoin",s:"BTC",t:"The first decentralized cryptocurrency, launched in 2009 by a person or group known as Satoshi Nakamoto. It runs on a Proof of Work blockchain and has a fixed supply of 21 million coins, which is why it is often called \"digital gold\" and viewed as a store of value."},
+ethereum:{n:"Ethereum",s:"ETH",t:"A blockchain platform that supports smart contracts, decentralized apps (DApps), decentralized finance (DeFi) and NFTs. Since 2022 it uses Proof of Stake, which cut its energy use dramatically. ETH is used to pay transaction fees on the network."},
+solana:{n:"Solana",s:"SOL",t:"A high-speed, low-fee blockchain aimed at large-scale applications. It combines Proof of Stake with a mechanism called Proof of History to order transactions quickly."},
+binancecoin:{n:"BNB",s:"BNB",t:"The native coin of BNB Chain, the ecosystem of the Binance exchange. It is used to pay fees, in decentralized apps, and for trading-fee discounts on Binance."},
+ripple:{n:"XRP",s:"XRP",t:"A digital asset tied to the XRP Ledger, designed for fast, cheap cross-border payments. The company Ripple is closely associated with it and has been involved in legal disputes with U.S. regulators."},
+cardano:{n:"Cardano",s:"ADA",t:"A Proof of Stake blockchain developed with an academic, research-driven approach and peer-reviewed papers. It supports smart contracts."},
+dogecoin:{n:"Dogecoin",s:"DOGE",t:"Started in 2013 as a joke based on the Shiba Inu meme, it became one of the best-known coins. Its price is heavily influenced by public sentiment and social media."},
+tether:{n:"Tether",s:"USDT",t:"A stablecoin designed to stay close to 1 US dollar. It is widely used as a trading pair and a way to park funds. Its main risks relate to the transparency and quality of the reserves backing it."}
+};
+var Q=["bitcoin","ethereum","solana","binancecoin","ripple","cardano","dogecoin","tether"];
+Q.forEach(function(id){var b=document.createElement("button");b.className="chip";b.textContent=KB[id].n+" "+KB[id].s;b.onclick=function(){load(id)};$("chips").appendChild(b)});
+$("key").value=localStorage.getItem("k")||"";
+$("savek").onclick=function(){localStorage.setItem("k",$("key").value.trim());$("savek").textContent="Saved ✓";setTimeout(function(){$("savek").textContent="Save"},1500)};
+
+function fmt(n,d){if(n==null)return"—";return n.toLocaleString("en-US",{maximumFractionDigits:d==null?2:d})}
+function usd(n){if(n==null)return"—";return"$"+fmt(n,n<1?6:2)}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function stat(l,v){var d=el("div","st");d.appendChild(el("small",0,l));d.appendChild(el("b",0,v));return d}
+function msg(t){return el("div","card",t)}
+function spark(p){
+ var mn=Math.min.apply(0,p),mx=Math.max.apply(0,p),w=600,h=100;
+ var pts=p.map(function(v,i){return(i/(p.length-1)*w).toFixed(1)+","+(h-4-(v-mn)/(mx-mn||1)*(h-8)).toFixed(1)}).join(" ");
+ var c=p[p.length-1]>=p[0]?"#16a34a":"#dc2626";
+ return '<svg viewBox="0 0 600 100" preserveAspectRatio="none"><polyline fill="none" stroke="'+c+'" stroke-width="2.5" points="'+pts+'"/></svg>';
+}
+async function jget(u){var r=await fetch(API+u);if(!r.ok)throw new Error(r.status);return r.json()}
+async function search(){
+ var t=$("q").value.trim().toLowerCase();if(!t)return;
+ for(var id in KB){if(KB[id].n.toLowerCase()==t||KB[id].s.toLowerCase()==t||id==t)return load(id)}
+ $("go").disabled=true;
+ try{var r=await jget("search?query="+encodeURIComponent(t));
+  if(!r.coins.length)$("res").replaceChildren(msg("No coin found with that name. Try a different spelling."));
+  else load(r.coins[0].id);
+ }catch(e){$("res").replaceChildren(msg("Could not reach the data source. Check your internet connection and try again."))}
+ $("go").disabled=false;
+}
+$("go").onclick=search;$("q").onkeydown=function(e){if(e.key=="Enter")search()};
+
+async function load(id){
+ $("res").replaceChildren(msg("Loading…"));
+ var d;
+ try{d=await jget("coins/"+encodeURIComponent(id)+"?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=true")}
+ catch(e){
+  if(KB[id]){var c0=el("div","card");c0.appendChild(el("h2",0,KB[id].n+" ("+KB[id].s+")"));c0.appendChild(el("p","txt",KB[id].t));c0.appendChild(el("p","mut","Live data could not be loaded right now (rate limit or no connection). Please try again in a minute."));$("res").replaceChildren(c0)}
+  else $("res").replaceChildren(msg("Could not load data. Please try again in a minute."));
+  return}
+ var m=d.market_data,kb=KB[id],ch=m.price_change_percentage_24h;
+ var c=el("div","card"),hd=el("div","hd");
+ var im=el("img");im.src=d.image&&d.image.small||"";im.alt="";hd.appendChild(im);
+ hd.appendChild(el("h2",0,d.name));
+ hd.appendChild(el("span","tag",d.symbol.toUpperCase()));
+ if(d.market_cap_rank)hd.appendChild(el("span","tag","Rank #"+d.market_cap_rank));
+ c.appendChild(hd);
+ var pr=el("div");pr.style.marginTop="10px";
+ pr.appendChild(el("span","price",usd(m.current_price.usd)));
+ var chs=el("span",ch>=0?"up":"dn"," "+(ch>=0?"▲ ":"▼ ")+fmt(Math.abs(ch||0),2)+"% (24h)");chs.style.marginLeft="10px";
+ pr.appendChild(chs);c.appendChild(pr);
+ if(m.sparkline_7d&&m.sparkline_7d.price){var sv=el("div");sv.innerHTML=spark(m.sparkline_7d.price);c.appendChild(sv);c.appendChild(el("div","mut","Price movement over the last 7 days"))}
+ var g=el("div","grid");
+ g.appendChild(stat("Market cap",usd(m.market_cap.usd)));
+ g.appendChild(stat("24h volume",usd(m.total_volume.usd)));
+ g.appendChild(stat("All-time high",usd(m.ath.usd)));
+ g.appendChild(stat("All-time low",usd(m.atl.usd)));
+ g.appendChild(stat("Circulating supply",fmt(m.circulating_supply,0)));
+ g.appendChild(stat("Max supply",m.max_supply?fmt(m.max_supply,0):"Unlimited"));
+ g.appendChild(stat("7d change",fmt(m.price_change_percentage_7d,2)+"%"));
+ g.appendChild(stat("30d change",fmt(m.price_change_percentage_30d,2)+"%"));
+ c.appendChild(g);
+ c.appendChild(el("h3",0,"📖 About"));
+ var desc=kb?kb.t:((d.description&&d.description.en||"").replace(/<[^>]+>/g,"").split("\n")[0].slice(0,700)||"No description available.");
+ c.appendChild(el("p","txt",desc));
+ var lk=d.links&&d.links.homepage&&d.links.homepage[0];
+ if(lk){var p=el("p");var a=el("a",0,"🌐 Official website");a.href=lk;a.target="_blank";a.rel="noopener noreferrer";p.appendChild(a);c.appendChild(p)}
+ c.appendChild(el("h3",0,"🤖 Ask AI about "+d.name));
+ var sb=el("div","sub"),out=el("div","txt");out.style.cssText="margin-top:12px;display:none;padding:12px;border-radius:12px;background:var(--soft)";
+ var ctx="Coin: "+d.name+" ("+d.symbol.toUpperCase()+") | Price: "+usd(m.current_price.usd)+" | Market cap: "+usd(m.market_cap.usd)+" | 24h change: "+fmt(ch,2)+"% | 30d change: "+fmt(m.price_change_percentage_30d,2)+"% | Circulating supply: "+fmt(m.circulating_supply,0)+" | Max supply: "+(m.max_supply||"unlimited");
+ [["Beginner explanation","Explain this coin to a beginner: what it is, what it is for, and how it works."],["Risks & weaknesses","Analyze this coin's risks and weaknesses and what to watch out for before dealing with it."],["Use cases & competitors","What are this coin's real-world use cases and who are its main competitors?"],["Read the current numbers","Explain what the current numbers (price, market cap, and changes) tell us, without predicting future prices."]].forEach(function(x){
+  var b=el("button","sec",x[0]);b.onclick=function(){ai(x[1],ctx,out,b)};sb.appendChild(b)});
+ c.appendChild(sb);c.appendChild(out);
+ $("res").replaceChildren(c);
+ window.scrollTo({top:$("res").offsetTop-10,behavior:"smooth"});
+}
+async function ai(task,ctx,out,btn){
+ var k=localStorage.getItem("k");out.style.display="block";
+ if(!k){out.textContent="Enter your Anthropic API key in the AI Settings section below to enable this feature.";return}
+ btn.disabled=true;out.textContent="Writing…";
+ var sys="You are a cryptocurrency expert. Answer in clear, well-organized, concise English. Do not give buy or sell recommendations and do not predict prices. Use the numbers provided plus your general knowledge, point out risks, and say so when you are unsure.";
+ try{
+  var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+   body:JSON.stringify({model:"claude-sonnet-5-5",max_tokens:1000,system:sys,messages:[{role:"user",content:ctx+"\n\n"+task}]})});
+  var j=await r.json();
+  if(!r.ok)throw new Error(j.error&&j.error.message||r.status);
+  out.textContent=j.content.map(function(b){return b.text||""}).join("");
+ }catch(e){out.textContent="Could not get an answer: "+e.message}
+ btn.disabled=false;
+}
+load("bitcoin");
+</script>
+</body>
+</html>
